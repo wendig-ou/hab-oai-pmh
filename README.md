@@ -5,7 +5,7 @@ This is the
 for the [Manuscript Database](http://diglib.hab.de/?db=mss&lang=en) by
 [Herzog August Bibliothek Wolfenbüttel](http://www.hab.de/en/home.html). The 
 interface is implemented as an eXist-db application which can be
-[downloaded here](https://github.com/wendig-ou/hab-oai-pmh/raw/...).
+[downloaded here](https://raw.githubusercontent.com/wendig-ou/hab-oai-pmh/master/dist/hab-oai-pmh-0.1.xar).
 
 # Deployment
 
