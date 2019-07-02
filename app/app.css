@@ -1,0 +1,15 @@
+a.navbar-brand {
+  line-height: 1.1em;
+}
+
+.navbar img.srg-logo {
+  height: 100px;
+}
+
+.navbar img.srg-logo-secondary {
+  height: 100px;
+}
+
+.footer img.srg-logo {
+  max-width: 240px;
+}

@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<profiles xmlns="http://exist-db.org/apps/hab-oai-pmh/settings">
+    <profile>
+        <!-- request parameter profile=... is checked against this value -->
+        <name>default</name>
+        
+        <!-- customizations for the welcome page -->
+        <favicon-url>http://www.hab.de/files/favicon.ico</favicon-url>
+        <logo-1-url>http://www.hab.de/images/logo.gif</logo-1-url>
+        <logo-2-url>https://www.mww-forschung.de/fileadmin/templates/img/brand/brand-green.svg</logo-2-url>
+        
+        <!-- used for the identify response -->
+        <use-https>true</use-https>
+        <repository-name>Test name</repository-name>
+        <admin-email>schepp@wendig.io</admin-email>
+        
+        <!-- root location of all your tei xml files -->
+        <data-root>/db/mss</data-root>
+        
+        <!-- maximum number of results per "page", beyond this, resumptionTokens
+             will be used -->
+        <per-page>50</per-page>
+    </profile>
+</profiles>

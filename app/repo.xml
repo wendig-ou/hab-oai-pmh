@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<meta xmlns="http://exist-db.org/xquery/repo">
+    <description>HAB OAI-PMH Interface</description>
+    <author>Moritz Schepp</author>
+    <website>https://github.com/wendig-ou/hab-oai-pmh</website>
+    <status>alpha</status>
+    <license>GNU-LGPL</license>
+    <copyright>true</copyright>
+    <type>application</type>
+    <target>hab-oai-pmh</target>
+    <finish>post-install.xq</finish>
+</meta>

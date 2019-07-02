@@ -1,0 +1,9 @@
+[Unit]
+Description=manages the eXist-db service
+
+[Service]
+Type=simple
+ExecStart=/var/exist/bin/startup.sh
+
+[Install]
+WantedBy=multi-user.target
