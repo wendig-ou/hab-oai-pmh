@@ -56,7 +56,7 @@ declare function oai:get-record(
                 xsi:schemaLocation="http://www.openarchives.org/OAI/2.0/ http://www.openarchives.org/OAI/2.0/OAI-PMH.xsd"
             >
                 <responseDate>{oai:ts()}</responseDate>
-                <request verb="ListSets">{oai:full-url()}</request>
+                {oai:request()}
                 <GetRecord>
                     <record>
                         {oai:header-for($result)}
@@ -79,7 +79,7 @@ declare function oai:identify() as node()
             xsi:schemaLocation="http://www.openarchives.org/OAI/2.0/ http://www.openarchives.org/OAI/2.0/OAI-PMH.xsd"
         >
             <responseDate>{oai:ts()}</responseDate>
-            <request verb="Identify">{oai:full-url()}</request>
+            {oai:request()}
             <Identify>
                 <repositoryName>{$profile/oais:repository-name/text()}</repositoryName>
                 <baseURL>{oai:base-url()}</baseURL>
@@ -157,22 +157,22 @@ declare function oai:list-identifiers(
                         xsi:schemaLocation="http://www.openarchives.org/OAI/2.0/ http://www.openarchives.org/OAI/2.0/OAI-PMH.xsd"
                     >
                         <responseDate>{oai:ts()}</responseDate>
-                        <request verb="Identify">{oai:full-url()}</request>
+                        {oai:request()}
                         <ListIdentifiers>
                             {
                                 for $result in $results
                                 return oai:header-for($result)
                             }
+                            {
+                                if ($new-token)
+                                then
+                                    <resumptionToken completeListSize="{$total}">
+                                        {string($new-token/@id)}
+                                    </resumptionToken>
+                                else
+                                    ''
+                            }
                         </ListIdentifiers>
-                        {
-                            if ($new-token)
-                            then
-                                <resumptionToken completeListSize="{$total}">
-                                    {string($new-token/@id)}
-                                </resumptionToken>
-                            else
-                                ''
-                        }
                     </OAI-PMH>
             )
 };
@@ -188,7 +188,7 @@ declare function oai:list-metadata-formats() as node()
             xsi:schemaLocation="http://www.openarchives.org/OAI/2.0/ http://www.openarchives.org/OAI/2.0/OAI-PMH.xsd"
         >
             <responseDate>{oai:ts()}</responseDate>
-            <request verb="Identify">{oai:full-url()}</request>
+            {oai:request()}
             <ListMetadataFormats>
                 <metadataFormat>
                     <metadataPrefix>oai_dc</metadataPrefix>
@@ -267,7 +267,7 @@ declare function oai:list-records(
                         xsi:schemaLocation="http://www.openarchives.org/OAI/2.0/ http://www.openarchives.org/OAI/2.0/OAI-PMH.xsd"
                     >
                         <responseDate>{oai:ts()}</responseDate>
-                        <request verb="Identify">{oai:full-url()}</request>
+                        {oai:request()}
                         <ListRecords>
                             {
                                 for $result in $results
@@ -279,16 +279,16 @@ declare function oai:list-records(
                                         </metadata>
                                     </record>
                             }
+                            {
+                                if ($new-token)
+                                then
+                                    <resumptionToken completeListSize="{$total}">
+                                        {string($new-token/@id)}
+                                    </resumptionToken>
+                                else
+                                    ''
+                            }
                         </ListRecords>
-                        {
-                            if ($new-token)
-                            then
-                                <resumptionToken completeListSize="{$total}">
-                                    {string($new-token/@id)}
-                                </resumptionToken>
-                            else
-                                ''
-                        }
                     </OAI-PMH>
             )
 };
@@ -312,7 +312,7 @@ declare function oai:list-sets($resumptionToken as xs:string) as node()
                 xsi:schemaLocation="http://www.openarchives.org/OAI/2.0/ http://www.openarchives.org/OAI/2.0/OAI-PMH.xsd"
             >
                 <responseDate>{oai:ts()}</responseDate>
-                <request verb="ListSets">{oai:full-url()}</request>
+                {oai:request()}
                 <ListSets>
                     { 
                         for $name in distinct-values($names)
@@ -336,7 +336,7 @@ as node()
         xsi:schemaLocation="http://www.openarchives.org/OAI/2.0/ http://www.openarchives.org/OAI/2.0/OAI-PMH.xsd"
     >
         <responseDate>{oai:ts()}</responseDate>
-        <request verb="VerbError">{oai:full-url()}</request>
+        {oai:request()}
         <error code="{$code}">{$message}</error>
     </OAI-PMH>  
 };
@@ -414,6 +414,18 @@ declare function oai:header-for($result as node()) as node()
                 return <setSpec>{oai:name-to-spec($set)}</setSpec>
             }
         </header>
+};
+
+declare function oai:request() as node()
+{
+    let $params := request:get-parameter-names()
+    return
+        element {fn:QName("http://www.openarchives.org/OAI/2.0/", "request")} {
+            for $name in $params
+            return attribute {$name} {request:get-parameter($name, ())},
+            oai:base-url()
+        }
+        
 };
 
 
@@ -533,8 +545,7 @@ declare function oai:tei-to-dc($result as node()) as node()
             xmlns:oai_dc="http://www.openarchives.org/OAI/2.0/oai_dc/" 
             xmlns:dc="http://purl.org/dc/elements/1.1/" 
             xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" 
-            xsi:schemaLocation="http://www.openarchives.org/OAI/2.0/oai_dc/ 
-            http://www.openarchives.org/OAI/2.0/oai_dc.xsd"
+            xsi:schemaLocation="http://www.openarchives.org/OAI/2.0/oai_dc/ http://www.openarchives.org/OAI/2.0/oai_dc.xsd"
         >
             <dc:identifier>{$identifier}</dc:identifier>
             <dc:type>Text</dc:type>
