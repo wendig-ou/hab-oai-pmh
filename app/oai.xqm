@@ -11,6 +11,10 @@ declare namespace oaid = "http://exist-db.org/apps/hab-oai-pmh/data";
 
 declare variable $oai:profile-name := request:get-parameter('profile', 'default');
 
+(: switch these lines to enable/disable sending an xslt include to the browser :)
+declare variable $oai:xslt-pi := processing-instruction xml-stylesheet {'type="text/xsl" href="oai.xsl"'};
+(: declare variable $oai:xslt-pi := (); :)
+
 (: test function
 
 declare function oai:test()
@@ -50,6 +54,35 @@ declare function oai:get-record(
         then
             oai:error('cannotDisseminateFormat', 'the requested format is not available for this identifier')
         else
+            document {
+                $oai:xslt-pi,
+                <OAI-PMH
+                    xmlns="http://www.openarchives.org/OAI/2.0/"
+                    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+                    xsi:schemaLocation="http://www.openarchives.org/OAI/2.0/ http://www.openarchives.org/OAI/2.0/OAI-PMH.xsd"
+                >
+                    <responseDate>{oai:ts()}</responseDate>
+                    {oai:request()}
+                    <GetRecord>
+                        <record>
+                            {oai:header-for($result)}
+                            <metadata>
+                                {oai:format($result, $metadataPrefix)}
+                            </metadata>
+                        </record>
+                    </GetRecord>
+                </OAI-PMH>
+            }
+            
+};
+
+declare function oai:identify() as node()
+{
+    let $profile := oai:profile()
+    
+    return (
+        document {
+            $oai:xslt-pi,
             <OAI-PMH
                 xmlns="http://www.openarchives.org/OAI/2.0/"
                 xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
@@ -57,39 +90,18 @@ declare function oai:get-record(
             >
                 <responseDate>{oai:ts()}</responseDate>
                 {oai:request()}
-                <GetRecord>
-                    <record>
-                        {oai:header-for($result)}
-                        <metadata>
-                            {oai:render($result, $metadataPrefix)}
-                        </metadata>
-                    </record>
-                </GetRecord>
+                <Identify>
+                    <repositoryName>{$profile/oais:repository-name/text()}</repositoryName>
+                    <baseURL>{oai:base-url()}</baseURL>
+                    <protocolVersion>2.0</protocolVersion>
+                    <adminEmail>{string($profile/oais:admin-email/text())}</adminEmail>
+                    <earliestDatestamp>{oai:format-date-time(oai:earliest($profile))}</earliestDatestamp>
+                    <deletedRecord>no</deletedRecord>
+                    <granularity>YYYY-MM-DDThh:mm:ssZ</granularity>
+                </Identify>
             </OAI-PMH>
-};
-
-declare function oai:identify() as node()
-{
-    let $profile := oai:profile()
-    
-    return 
-        <OAI-PMH
-            xmlns="http://www.openarchives.org/OAI/2.0/"
-            xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-            xsi:schemaLocation="http://www.openarchives.org/OAI/2.0/ http://www.openarchives.org/OAI/2.0/OAI-PMH.xsd"
-        >
-            <responseDate>{oai:ts()}</responseDate>
-            {oai:request()}
-            <Identify>
-                <repositoryName>{$profile/oais:repository-name/text()}</repositoryName>
-                <baseURL>{oai:base-url()}</baseURL>
-                <protocolVersion>2.0</protocolVersion>
-                <adminEmail>{string($profile/oais:admin-email/text())}</adminEmail>
-                <earliestDatestamp>{oai:format-date-time(oai:earliest($profile))}</earliestDatestamp>
-                <deletedRecord>no</deletedRecord>
-                <granularity>YYYY-MM-DDThh:mm:ssZ</granularity>
-            </Identify>
-        </OAI-PMH>
+        }
+    )
 };
 
 declare function oai:list-identifiers(
@@ -151,29 +163,32 @@ declare function oai:list-identifiers(
                 then
                     oai:error('noRecordsMatch', 'no records match your criteria')
                 else
-                    <OAI-PMH
-                        xmlns="http://www.openarchives.org/OAI/2.0/"
-                        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-                        xsi:schemaLocation="http://www.openarchives.org/OAI/2.0/ http://www.openarchives.org/OAI/2.0/OAI-PMH.xsd"
-                    >
-                        <responseDate>{oai:ts()}</responseDate>
-                        {oai:request()}
-                        <ListIdentifiers>
-                            {
-                                for $result in $results
-                                return oai:header-for($result)
-                            }
-                            {
-                                if ($new-token)
-                                then
-                                    <resumptionToken completeListSize="{$total}">
-                                        {string($new-token/@id)}
-                                    </resumptionToken>
-                                else
-                                    ''
-                            }
-                        </ListIdentifiers>
-                    </OAI-PMH>
+                    document {
+                        $oai:xslt-pi,
+                        <OAI-PMH
+                            xmlns="http://www.openarchives.org/OAI/2.0/"
+                            xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+                            xsi:schemaLocation="http://www.openarchives.org/OAI/2.0/ http://www.openarchives.org/OAI/2.0/OAI-PMH.xsd"
+                        >
+                            <responseDate>{oai:ts()}</responseDate>
+                            {oai:request()}
+                            <ListIdentifiers>
+                                {
+                                    for $result in $results
+                                    return oai:header-for($result)
+                                }
+                                {
+                                    if ($new-token)
+                                    then
+                                        <resumptionToken completeListSize="{$total}">
+                                            {string($new-token/@id)}
+                                        </resumptionToken>
+                                    else
+                                        ''
+                                }
+                            </ListIdentifiers>
+                        </OAI-PMH>
+                    }
             )
 };
 
@@ -182,24 +197,27 @@ declare function oai:list-metadata-formats() as node()
     let $profile := oai:profile()
     
     return
-        <OAI-PMH
-            xmlns="http://www.openarchives.org/OAI/2.0/"
-            xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-            xsi:schemaLocation="http://www.openarchives.org/OAI/2.0/ http://www.openarchives.org/OAI/2.0/OAI-PMH.xsd"
-        >
-            <responseDate>{oai:ts()}</responseDate>
-            {oai:request()}
-            <ListMetadataFormats>
-                <metadataFormat>
-                    <metadataPrefix>oai_dc</metadataPrefix>
-                    <schema>http://www.openarchives.org/OAI/2.0/oai_dc.xsd</schema>
-                </metadataFormat>
-                <metadataFormat>
-                    <metadataPrefix>oai_tei</metadataPrefix>
-                    <schema>http://www.tei-c.org/ns/1.0 http://diglib.hab.de/rules/schema/mss/v1.0/cataloguing.xsd</schema>
-                </metadataFormat>
-            </ListMetadataFormats>
-        </OAI-PMH>
+        document {
+            $oai:xslt-pi,
+            <OAI-PMH
+                xmlns="http://www.openarchives.org/OAI/2.0/"
+                xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+                xsi:schemaLocation="http://www.openarchives.org/OAI/2.0/ http://www.openarchives.org/OAI/2.0/OAI-PMH.xsd"
+            >
+                <responseDate>{oai:ts()}</responseDate>
+                {oai:request()}
+                <ListMetadataFormats>
+                    <metadataFormat>
+                        <metadataPrefix>oai_dc</metadataPrefix>
+                        <schema>http://www.openarchives.org/OAI/2.0/oai_dc.xsd</schema>
+                    </metadataFormat>
+                    <metadataFormat>
+                        <metadataPrefix>oai_tei</metadataPrefix>
+                        <schema>http://www.tei-c.org/ns/1.0 http://diglib.hab.de/rules/schema/mss/v1.0/cataloguing.xsd</schema>
+                    </metadataFormat>
+                </ListMetadataFormats>
+            </OAI-PMH>
+        }
 };
 
 declare function oai:list-records(
@@ -261,35 +279,38 @@ declare function oai:list-records(
                 then
                     oai:error('noRecordsMatch', 'no records match your criteria')
                 else
-                    <OAI-PMH
-                        xmlns="http://www.openarchives.org/OAI/2.0/"
-                        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-                        xsi:schemaLocation="http://www.openarchives.org/OAI/2.0/ http://www.openarchives.org/OAI/2.0/OAI-PMH.xsd"
-                    >
-                        <responseDate>{oai:ts()}</responseDate>
-                        {oai:request()}
-                        <ListRecords>
-                            {
-                                for $result in $results
-                                return
-                                    <record>
-                                        {oai:header-for($result)}
-                                        <metadata>
-                                            {oai:render($result, $metadataPrefix)}
-                                        </metadata>
-                                    </record>
-                            }
-                            {
-                                if ($new-token)
-                                then
-                                    <resumptionToken completeListSize="{$total}">
-                                        {string($new-token/@id)}
-                                    </resumptionToken>
-                                else
-                                    ''
-                            }
-                        </ListRecords>
-                    </OAI-PMH>
+                    document {
+                        $oai:xslt-pi,
+                        <OAI-PMH
+                            xmlns="http://www.openarchives.org/OAI/2.0/"
+                            xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+                            xsi:schemaLocation="http://www.openarchives.org/OAI/2.0/ http://www.openarchives.org/OAI/2.0/OAI-PMH.xsd"
+                        >
+                            <responseDate>{oai:ts()}</responseDate>
+                            {oai:request()}
+                            <ListRecords>
+                                {
+                                    for $result in $results
+                                    return
+                                        <record>
+                                            {oai:header-for($result)}
+                                            <metadata>
+                                                {oai:format($result, $metadataPrefix)}
+                                            </metadata>
+                                        </record>
+                                }
+                                {
+                                    if ($new-token)
+                                    then
+                                        <resumptionToken completeListSize="{$total}">
+                                            {string($new-token/@id)}
+                                        </resumptionToken>
+                                    else
+                                        ''
+                                }
+                            </ListRecords>
+                        </OAI-PMH>
+                    }
             )
 };
 
@@ -306,39 +327,45 @@ declare function oai:list-sets($resumptionToken as xs:string) as node()
                 'this repository will always deliver all sets in one request'
             )
         else
-            <OAI-PMH
-                xmlns="http://www.openarchives.org/OAI/2.0/"
-                xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-                xsi:schemaLocation="http://www.openarchives.org/OAI/2.0/ http://www.openarchives.org/OAI/2.0/OAI-PMH.xsd"
-            >
-                <responseDate>{oai:ts()}</responseDate>
-                {oai:request()}
-                <ListSets>
-                    { 
-                        for $name in distinct-values($names)
-                        order by $name
-                        return
-                            <set>
-                                <setSpec>{oai:name-to-spec($name)}</setSpec>
-                                <setName>{$name}</setName>
-                            </set>
-                    }
-                </ListSets>
-            </OAI-PMH>
+            document {
+                $oai:xslt-pi,
+                <OAI-PMH
+                    xmlns="http://www.openarchives.org/OAI/2.0/"
+                    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+                    xsi:schemaLocation="http://www.openarchives.org/OAI/2.0/ http://www.openarchives.org/OAI/2.0/OAI-PMH.xsd"
+                >
+                    <responseDate>{oai:ts()}</responseDate>
+                    {oai:request()}
+                    <ListSets>
+                        { 
+                            for $name in distinct-values($names)
+                            order by $name
+                            return
+                                <set>
+                                    <setSpec>{oai:name-to-spec($name)}</setSpec>
+                                    <setName>{$name}</setName>
+                                </set>
+                        }
+                    </ListSets>
+                </OAI-PMH>
+            }
 };
 
 declare function oai:error($code as xs:string, $message as xs:string)
 as node()
 {
-    <OAI-PMH
-        xmlns="http://www.openarchives.org/OAI/2.0/"
-        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-        xsi:schemaLocation="http://www.openarchives.org/OAI/2.0/ http://www.openarchives.org/OAI/2.0/OAI-PMH.xsd"
-    >
-        <responseDate>{oai:ts()}</responseDate>
-        {oai:request()}
-        <error code="{$code}">{$message}</error>
-    </OAI-PMH>  
+    document {
+        $oai:xslt-pi,
+        <OAI-PMH
+            xmlns="http://www.openarchives.org/OAI/2.0/"
+            xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+            xsi:schemaLocation="http://www.openarchives.org/OAI/2.0/ http://www.openarchives.org/OAI/2.0/OAI-PMH.xsd"
+        >
+            <responseDate>{oai:ts()}</responseDate>
+            {oai:request()}
+            <error code="{$code}">{$message}</error>
+        </OAI-PMH>
+    }
 };
 
 
@@ -527,7 +554,7 @@ as node()
         if ($profile) then $profile else $default
 };
 
-declare function oai:render($result as node(), $metadataPrefix as xs:string)
+declare function oai:format($result as node(), $metadataPrefix as xs:string)
 as node()
 {
     if ($metadataPrefix = 'oai_tei')

@@ -1,6 +1,6 @@
 xquery version "3.0";
 
-declare option exist:serialize "method=xml media-type=text/xml";
+declare option exist:serialize "method=xml media-type=text/xml process-xsl-pi=no";
 
 (: import module namespace console="http://exist-db.org/xquery/console"; :)
 
@@ -20,12 +20,6 @@ declare variable $resumptionToken := request:get-parameter('resumptionToken', ''
 
 (: declare variable $base-path := concat('/exist', $exist:prefix, $exist:controller); :)
 
-(: declare variable $x := console:log($exist:root);
-declare variable $y := console:log($exist:prefix);
-declare variable $z := console:log($exist:path);
-declare variable $u := console:log($exist:controller);
-declare variable $v := console:log($exist:resource); :)
-
 import module namespace oai="http://exist-db.org/apps/oai/pmh" at 'oai.xqm';
 
 switch ($exist:path)
@@ -36,6 +30,10 @@ switch ($exist:path)
     case '/app.css' return
         <dispatch xmlns="http://exist.sourceforge.net/NS/exist">
           <forward url="app.css" />
+        </dispatch>
+    case '/oai.xsl' return
+        <dispatch xmlns="http://exist.sourceforge.net/NS/exist">
+          <forward url="oai.xsl" />
         </dispatch>
     case '/oai-pmh' return
         switch ($verb)
