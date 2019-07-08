@@ -209,11 +209,13 @@ declare function oai:list-metadata-formats() as node()
                 <ListMetadataFormats>
                     <metadataFormat>
                         <metadataPrefix>oai_dc</metadataPrefix>
+                        <metadataNamespace>http://www.openarchives.org/OAI/2.0/oai_dc/</metadataNamespace>
                         <schema>http://www.openarchives.org/OAI/2.0/oai_dc.xsd</schema>
                     </metadataFormat>
                     <metadataFormat>
                         <metadataPrefix>oai_tei</metadataPrefix>
-                        <schema>http://www.tei-c.org/ns/1.0 http://diglib.hab.de/rules/schema/mss/v1.0/cataloguing.xsd</schema>
+                        <metadataNamespace>http://www.tei-c.org/ns/1.0</metadataNamespace>
+                        <schema>http://diglib.hab.de/rules/schema/mss/v1.0/cataloguing.xsd</schema>
                     </metadataFormat>
                 </ListMetadataFormats>
             </OAI-PMH>
