@@ -9,9 +9,8 @@ interface is implemented as an eXist-db application. All versions can be
 
 # Deployment
 
-Just upload the .xar file to your eXist-db package manager.
-
-TODO: xml:base attributes confusion
+Just upload the .xar file to your eXist-db package manager. See
+[available versions](https://github.com/wendig-ou/hab-oai-pmh/tree/master/dist).
 
 # Development
 
@@ -36,7 +35,7 @@ sudo rm -rf mss
 sudo umount dav
 ~~~
 
-At this point the data is available and once the application can be used at
+At this point the data is available and the application can be used at
 https://localhost:8080
 
 # Tests
