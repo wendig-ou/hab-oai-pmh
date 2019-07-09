@@ -29,7 +29,9 @@ This version was adapted for the Wolfenbuettel Digital Libray (http://www.hab.de
 
 By Thomas Staecker, Herzog August Bibliothek Wolfenbuettel, 2008
 
+This version was adapted for the Wolfenbuettel Digital Libray (http://www.hab.de/bibliothek/wdb/); it adds a TEI link to the record output
 
+By Moritz Schepp, Wendig OÜ, 2019
 --><!--
 
   All the elements really needed for EPrints are done but if
@@ -644,11 +646,7 @@ p.intro {
         <xsl:text> </xsl:text>
         <a class="link" href="?verb=GetRecord&amp;metadataPrefix=oai_dc&amp;identifier={oai:identifier}">oai_dc</a>
         <xsl:text> </xsl:text>
-        <a class="link" href="?verb=GetRecord&amp;metadataPrefix=mods&amp;identifier={oai:identifier}">mods</a>
-        <xsl:text> </xsl:text>
-        <a class="link" href="?verb=GetRecord&amp;metadataPrefix=mets&amp;identifier={oai:identifier}">mets</a>
-        <xsl:text> </xsl:text>
-        <a class="link" href="http://dfg-viewer.de/show/?set[mets]=http%3A%2F%2Foai.hab.de%2F%3Fverb%3DGetRecord%26metadataPrefix%3Dmets%26identifier%3D{oai:identifier}">display in DFG viewer</a>
+        <a class="link" href="?verb=GetRecord&amp;metadataPrefix=oai_tei&amp;identifier={oai:identifier}">oai_tei</a>
       </td>
             </tr>
     <tr>

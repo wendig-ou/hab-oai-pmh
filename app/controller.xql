@@ -18,8 +18,6 @@ declare variable $until := request:get-parameter('until', '');
 declare variable $set := request:get-parameter('set', '');
 declare variable $resumptionToken := request:get-parameter('resumptionToken', '');
 
-(: declare variable $base-path := concat('/exist', $exist:prefix, $exist:controller); :)
-
 import module namespace oai="http://exist-db.org/apps/oai/pmh" at 'oai.xqm';
 
 switch ($exist:path)
@@ -37,7 +35,6 @@ switch ($exist:path)
         </dispatch>
     case '/oai-pmh' return
         switch ($verb)
-            (: case 'test' return oai:test() :)
             case 'GetRecord' return oai:get-record($identifier, $metadataPrefix)
             case 'Identify' return oai:identify()
             case 'ListIdentifiers' return oai:list-identifiers($from, $until, $metadataPrefix, $set, $resumptionToken)

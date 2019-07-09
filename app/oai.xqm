@@ -1,5 +1,13 @@
 xquery version "3.0";
 
+(: 
+ : 
+ : While this OAI-PMH interface exposes Dublin Core, the format is actually not
+ : stored in the database but generated on the fly from tei:TEI elements, see
+ : function oai:tei-to-dc below.
+ : 
+ :  :)
+
 module namespace oai = "http://exist-db.org/apps/oai/pmh";
 
 (: import module namespace console="http://exist-db.org/xquery/console"; :)
@@ -14,24 +22,6 @@ declare variable $oai:profile-name := request:get-parameter('profile', 'default'
 (: switch these lines to enable/disable sending an xslt include to the browser :)
 declare variable $oai:xslt-pi := processing-instruction xml-stylesheet {'type="text/xsl" href="oai.xsl"'};
 (: declare variable $oai:xslt-pi := (); :)
-
-(: test function
-
-declare function oai:test()
-{
-    let $profile := oai:profile(),
-        $docs := collection('/db/mss')//tei:TEI,
-        $a := $docs[@xml:id='HAB_mss_285-novi_tei-msDesc'],
-        $b := $docs[@xml:id='HAB_mss_1092-helmst_tei-msDesc_Heinemann'],
-        $x := oai:last-modified($a),
-        $y := oai:last-modified($b),
-        $o := "2019-06-25T00:00:00Z",
-        $p := oai:parse-date-time($o)
-    
-    return (
-        <x>{index-of(oai:sets($a), 'Novi Handschriften')}</x>
-    )
-}; :)
 
 
 (: oai-pmh verbs and error responses :)
@@ -624,7 +614,7 @@ declare function oai:full-url() as xs:string
         $ssl := if (oai:use-https()) then replace($base, '^http:', 'https:') else $base,
         $qs := request:get-query-string()
     return
-        if ($qs) then $ssl || '?' || $qs else $ssl
+        if ($qs) then concat($ssl, '?', $qs) else $ssl
 };
 
 declare function oai:base-url() as xs:string
