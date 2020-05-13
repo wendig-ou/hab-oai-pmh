@@ -12,7 +12,7 @@ interface is implemented as an eXist-db application. All versions can be
 Just upload the .xar file to your eXist-db package manager. See
 [available versions](https://github.com/wendig-ou/hab-oai-pmh/tree/master/dist).
 
-Configuration kann be changed in the package's `profiles.xml`. Either change the
+Configuration can be changed in the package's `profiles.xml`. Either change the
 default profile or copy it, choose a different name for it and change it. To
 make the app use a non-default profile, the url parameter `profile=my-profile`
 needs to be specified when making OAI PMH requests.
