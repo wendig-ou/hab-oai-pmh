@@ -12,6 +12,15 @@ interface is implemented as an eXist-db application. All versions can be
 Just upload the .xar file to your eXist-db package manager. See
 [available versions](https://github.com/wendig-ou/hab-oai-pmh/tree/master/dist).
 
+Configuration kann be changed in the package's `profiles.xml`. Either change the
+default profile or copy it, choose a different name for it and change it. To
+make the app use a non-default profile, the url parameter `profile=my-profile`
+needs to be specified when making OAI PMH requests.
+
+Special care has to be taken with data containing the `xml:base` attribute. The
+attribute influences the way the app determines document locations and therefore
+leads to problems. In most circumstances, it should be removed.
+
 # Development
 
 This repository ships with a [Vagrantfile](https://www.vagrantup.com/) so you may run
