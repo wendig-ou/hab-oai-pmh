@@ -19,7 +19,8 @@ needs to be specified when making OAI PMH requests.
 
 Special care has to be taken with data containing the `xml:base` attribute. The
 attribute influences the way the app determines document locations and therefore
-leads to problems. In most circumstances, it should be removed.
+leads to problems. In most circumstances, it should be removed. Run the
+included `find-xml-base.xq` script with eXide's "Eval".
 
 # Development
 
