@@ -117,7 +117,7 @@ declare function oai:list-identifiers(
             oai:error('badResumptionToken', 'the resumptionToken is invalid')
         else if (not($metadataPrefix))
         then
-            oai:error('badArgument', 'metadataPrefix must be specified (oai_dc or oai_tei or mets)')
+            oai:error('badArgument', 'metadataPrefix must be specified (oai_dc or oai_tei or oai_mets)')
         else if (not($metadataPrefix = 'oai_tei') and not($metadataPrefix = 'oai_dc') and not($metadataPrefix = 'oai_mets'))
         then 
             oai:error('cannotDisseminateFormat', "only 'oai_dc', 'oai_tei', and 'oai_mets' are valid formats")
@@ -243,7 +243,7 @@ declare function oai:list-records(
             oai:error('badArgument', 'metadataPrefix must be specified (oai_dc or oai_tei or oai_mets)')
         else if (not($metadataPrefix = 'oai_tei') and not($metadataPrefix = 'oai_dc') and not($metadataPrefix = 'oai_mets'))
         then 
-            oai:error('cannotDisseminateFormat', "only 'oai_dc', 'oai_tei', and 'mets' are valid formats")
+            oai:error('cannotDisseminateFormat', "only 'oai_dc', 'oai_tei', and 'oai_mets' are valid formats")
         else if ($from and not(oai:parse-date-time($from) instance of xs:dateTime))
         then
             oai:error('badArgument', 'from parameter is not in form YYYY-MM-DDTHH:MM:SSZ')
@@ -578,10 +578,8 @@ as node()
 declare function oai:format($result as node(), $metadataPrefix as xs:string)
 as node()
 {
-    if ($metadataPrefix = 'oai_tei')
-    then oai:tei-to-tei($result)
-    else if ($metadataPrefix = 'oai_mets')
-    then oai:tei-to-mets($result)
+         if ($metadataPrefix = 'oai_tei')  then oai:tei-to-tei($result)
+    else if ($metadataPrefix = 'oai_mets') then oai:tei-to-mets($result)
     else oai:tei-to-dc($result)
 };
 
