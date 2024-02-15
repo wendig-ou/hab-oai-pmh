@@ -23,7 +23,7 @@ return
     
     <nav class="navbar navbar-expand-lg navbar-light bg-light justify-content-start">
         <a class="navbar-brand mr-3 d-none d-md-block">
-            <img src="{$logo-1-url}" class="srg-logo-secondary"/>
+            <img src="{$logo-1-url}" class="srg-logo-secondary" style="width:75%; height:75%;"/>
         </a>
         <a href="http://www.hab.de/en/home.html" target="_blank" rel="noopener" class="navbar-brand">
             Herzog August Bibliothek Wolfenbüttel<br/>

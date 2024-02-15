@@ -13,6 +13,7 @@ module namespace oai = "http://exist-db.org/apps/oai/pmh";
 (: import module namespace console="http://exist-db.org/xquery/console"; :)
 
 declare namespace tei = "http://www.tei-c.org/ns/1.0";
+declare namespace mets = "http://www.loc.gov/METS/";
 declare namespace dc = "http://www.openarchives.org/OAI/2.0/oai_dc/";
 declare namespace oais = "http://exist-db.org/apps/hab-oai-pmh/settings";
 declare namespace oaid = "http://exist-db.org/apps/hab-oai-pmh/data";
@@ -22,7 +23,6 @@ declare variable $oai:profile-name := request:get-parameter('profile', 'default'
 (: switch these lines to enable/disable sending an xslt include to the browser :)
 declare variable $oai:xslt-pi := processing-instruction xml-stylesheet {'type="text/xsl" href="oai.xsl"'};
 (: declare variable $oai:xslt-pi := (); :)
-
 
 (: oai-pmh verbs and error responses :)
 
@@ -40,7 +40,7 @@ declare function oai:get-record(
         else if (not($result))
         then
             oai:error('idDoesNotExist', 'the requested identifier could not be found')
-        else if (not($metadataPrefix = 'oai_dc') and not($metadataPrefix = 'oai_tei'))
+        else if (not($metadataPrefix = 'oai_dc') and not($metadataPrefix = 'oai_tei') and not($metadataPrefix = 'oai_mets'))
         then
             oai:error('cannotDisseminateFormat', 'the requested format is not available for this identifier')
         else
@@ -117,10 +117,10 @@ declare function oai:list-identifiers(
             oai:error('badResumptionToken', 'the resumptionToken is invalid')
         else if (not($metadataPrefix))
         then
-            oai:error('badArgument', 'metadataPrefix must be specified (oai_dc or oai_tei)')
-        else if (not($metadataPrefix = 'oai_tei') and not($metadataPrefix = 'oai_dc'))
+            oai:error('badArgument', 'metadataPrefix must be specified (oai_dc or oai_tei or mets)')
+        else if (not($metadataPrefix = 'oai_tei') and not($metadataPrefix = 'oai_dc') and not($metadataPrefix = 'oai_mets'))
         then 
-            oai:error('cannotDisseminateFormat', "only 'oai_dc' and 'oai_tei' are valid formats")
+            oai:error('cannotDisseminateFormat', "only 'oai_dc', 'oai_tei', and 'oai_mets' are valid formats")
         else if ($from and not(oai:parse-date-time($from) instance of xs:dateTime))
         then
             oai:error('badArgument', 'from parameter is not in form YYYY-MM-DDTHH:MM:SSZ')
@@ -207,6 +207,11 @@ declare function oai:list-metadata-formats() as node()
                         <metadataNamespace>http://www.tei-c.org/ns/1.0</metadataNamespace>
                         <schema>http://diglib.hab.de/rules/schema/mss/v1.0/cataloguing.xsd</schema>
                     </metadataFormat>
+                    <metadataFormat>
+                        <metadataPrefix>oai_mets</metadataPrefix>
+                        <metadataNamespace>http://www.loc.gov/METS/</metadataNamespace>
+                        <schema>http://www.loc.gov/standards/mets/mets.xsd</schema>
+                    </metadataFormat>
                 </ListMetadataFormats>
             </OAI-PMH>
         }
@@ -235,10 +240,10 @@ declare function oai:list-records(
             oai:error('badResumptionToken', 'the resumptionToken is invalid')
         else if (not($metadataPrefix))
         then
-            oai:error('badArgument', 'metadataPrefix must be specified (oai_dc or oai_tei)')
-        else if (not($metadataPrefix = 'oai_tei') and not($metadataPrefix = 'oai_dc'))
+            oai:error('badArgument', 'metadataPrefix must be specified (oai_dc or oai_tei or oai_mets)')
+        else if (not($metadataPrefix = 'oai_tei') and not($metadataPrefix = 'oai_dc') and not($metadataPrefix = 'oai_mets'))
         then 
-            oai:error('cannotDisseminateFormat', "only 'oai_dc' and 'oai_tei' are valid formats")
+            oai:error('cannotDisseminateFormat', "only 'oai_dc', 'oai_tei', and 'mets' are valid formats")
         else if ($from and not(oai:parse-date-time($from) instance of xs:dateTime))
         then
             oai:error('badArgument', 'from parameter is not in form YYYY-MM-DDTHH:MM:SSZ')
@@ -306,11 +311,16 @@ declare function oai:list-records(
             )
 };
 
+(:
+($data//tei:msIdentifier[tei:repository='Herzog August Bibliothek']/tei:collection/text(), 
+                   $data//tei:msIdentifier[not(tei:repository='Herzog August Bibliothek')]/tei:settlement/text(), 
+                   $data//tei:name[@type='project'][not(parent::tei:name[@type='project'])])
+:)
 declare function oai:list-sets($resumptionToken as xs:string) as node()
 {
     let $profile := oai:profile(),
         $data := collection($profile/oais:data-root/text()),
-        $names := $data//tei:msIdentifier/tei:collection/text()
+        $names := ($data//tei:msIdentifier/tei:collection/text(), $data//tei:name[@type='project']/normalize-space(text()[1]))
     return
         if ($resumptionToken)
         then
@@ -465,6 +475,10 @@ declare function oai:filter(
 {
     let $results := oai:all-tei($profile)
     for $result in $results
+    (: 
+    problems might result from usage of @xml:base
+    check for occurences here: view-source:http://exist1.hab.local:8080/exist/rest/db/apps/hab-oai-pmh/find-xml-base.xq
+    :)
     let $rlm := oai:utcs(oai:last-modified($result)),
         $fc := if ($from)
                then oai:utcs(oai:parse-date-time($from)) <= $rlm
@@ -516,7 +530,8 @@ declare function oai:setSpecs($result as node()) as xs:string*
 
 declare function oai:sets($result as node()) as xs:string*
 {
-    distinct-values($result//tei:msIdentifier/tei:collection/text())
+    distinct-values($result//tei:msIdentifier/tei:collection/text()), 
+    distinct-values($result//tei:name[@type='project']/normalize-space(text()[1]))
 };
 
 declare function oai:identifier($result as node()) as xs:string
@@ -524,6 +539,7 @@ declare function oai:identifier($result as node()) as xs:string
     string($result/@xml:id)
 };
 
+(:
 declare function oai:last-modified($result as node())
 {
     let $uri := fn:base-uri($result),
@@ -532,7 +548,20 @@ declare function oai:last-modified($result as node())
     return
         xmldb:last-modified($c, $d)
 };
+:)
 
+declare function oai:last-modified($result as node())
+{
+   let $uri := fn:base-uri($result),
+       $c := fn:replace($uri, '/[^/]+$', ''),
+       $d := fn:replace($uri, '^.*/([^/]+)$', '$1'),
+       $ts := xmldb:last-modified($c, $d),
+       $debug := if (fn:count($ts) eq 0) then
+           error(QName('', 'debug'), $uri)
+       else
+           'none'
+   return $ts
+}; 
 
 (: util functions :)
 
@@ -550,14 +579,31 @@ declare function oai:format($result as node(), $metadataPrefix as xs:string)
 as node()
 {
     if ($metadataPrefix = 'oai_tei')
-    then $result
+    then oai:tei-to-tei($result)
+    else if ($metadataPrefix = 'oai_mets')
+    then oai:tei-to-mets($result)
     else oai:tei-to-dc($result)
 };
+
+declare function oai:tei-to-tei($result as node()) as node()
+{
+    let $identifier := string($result/@xml:id)
+    return
+        transform:transform($result, 'xmldb:exist:///db/apps/hab-oai-pmh/tei2tei.xsl', <parameters xmlns="http://www.w3.org/1999/xhtml"><param name="idno" value="{$identifier}"/></parameters>)
+};
+
+declare function oai:tei-to-mets($result as node()) as node()
+{
+    let $identifier := string($result/@xml:id)
+    return
+        transform:transform($result, 'xmldb:exist:///db/apps/hab-oai-pmh/tei2mets.xsl', <parameters xmlns="http://www.w3.org/1999/xhtml"><param name="idno" value="{$identifier}"/></parameters>)
+};
+(: Beispiel http://dbs.hab.de/oai/wdb?verb=GetRecord&metadataPrefix=mets&identifier=oai:diglib.hab.de:ppn_549836969 :)
 
 declare function oai:tei-to-dc($result as node()) as node()
 {
     let $identifier := string($result/@xml:id),
-        $title := $result//tei:title/text(),
+        $title := $result//tei:title[parent::tei:titleStmt]/text(),
         $publisher := $result//tei:publisher/tei:name/text()
     return
         <oai_dc:dc 
@@ -632,7 +678,8 @@ declare function oai:name-to-spec($name as xs:string) as xs:string
 declare function oai:parse-date-time($string as xs:string)
 {
     try {
-        let $result := datetime:parse-dateTime($string, "y-M-d'T'H:m:s'Z'")
+        (:let $result := datetime:parse-dateTime($string, "y-M-d'T'H:m:s'Z'"):)
+        let $result := $string
         return $result
     } catch * {
         ''
@@ -641,7 +688,11 @@ declare function oai:parse-date-time($string as xs:string)
 
 declare function oai:format-date-time($input as xs:dateTime) as xs:string
 {
+    (:
     let $ts := datetime:timestamp($input),
         $utc := datetime:timestamp-to-datetime($ts)
     return datetime:format-dateTime($utc, "yyyy-MM-dd'T'HH:mm:ss'Z'")
+    :)
+    let $ts := $input
+    return concat(substring($ts, 1, 19), 'Z')
 };
